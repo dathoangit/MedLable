@@ -1,0 +1,436 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7f5;
+  --card: #ffffff;
+  --text: #14231c;
+  --muted: #5b6b63;
+  --accent: #107a5c;
+  --accent-dark: #0b5a44;
+  --danger: #b42318;
+  --border: #d7e0db;
+  --font: 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: var(--font);
+  background: linear-gradient(180deg, #e8f2ed 0%, var(--bg) 40%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 4px 0 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+input[type='text'] {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--accent-dark);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.hint code {
+  font-size: 0.85em;
+}
+
+.status {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.status.ok {
+  color: var(--accent-dark);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.kv dt {
+  color: var(--muted);
+  margin: 0;
+}
+
+.kv dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e8f2ed;
+  color: var(--accent-dark);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge.muted {
+  background: #eef1ef;
+  color: var(--muted);
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.order-block {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafcfb;
+}
+
+.order-header {
+  margin-bottom: 10px;
+}
+
+.order-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.order-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.order-meta {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+td {
+  max-width: 220px;
+}
+
+/* —— Injection label preview (50×20 mm @ 3×) —— */
+
+.tem-dialog {
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 16px 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.tem-dialog::backdrop {
+  background: rgba(20, 35, 28, 0.45);
+}
+
+.tem-dialog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+
+.tem-dialog-bar h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.tem-dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #f4f7f5;
+}
+
+.labels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+  overflow: auto;
+  max-height: min(70vh, 640px);
+}
+
+.label-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafcfb;
+}
+
+.label-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.label-card-route {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.btn-print {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.btn-print:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.row-injectable {
+  background: #f0faf6;
+}
+
+.row-preview-slot {
+  /* One physical roll row: 100×20 mm × scale 2 */
+  width: calc(100mm * 2);
+  height: calc(20mm * 2);
+  max-width: 100%;
+  overflow: auto;
+  background: #e8ecea;
+  border-radius: 4px;
+  border: 1px dashed var(--border);
+}
+
+.row-preview-scale {
+  width: 100mm;
+  height: 20mm;
+  transform: scale(2);
+  transform-origin: top left;
+}
+
+.tem-row {
+  width: 100mm;
+  height: 20mm;
+  display: flex;
+  overflow: hidden;
+}
+
+.tem-slot {
+  width: 50mm;
+  height: 20mm;
+  overflow: hidden;
+}
+
+.tem-slot-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(
+    45deg,
+    #f1f4f2,
+    #f1f4f2 2mm,
+    #e6ebe8 2mm,
+    #e6ebe8 4mm
+  );
+  border: 1px dashed #bbb;
+  color: #8b9a93;
+  font-size: 5pt;
+}
+
+.row-card-reprints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-reprint {
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inj-label {
+  width: 50mm;
+  height: 20mm;
+  padding: 1mm 1.2mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  border: 1px solid #bbb;
+}
+
+.inj-label-drug {
+  font-size: 6pt;
+  line-height: 1.15;
+  max-height: 2.3em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
+}
+
+.inj-label-mix {
+  font-size: 5.5pt;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.inj-label-patient {
+  font-size: 6pt;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inj-label-k {
+  font-weight: 400;
+}
+
+.inj-label-v {
+  font-weight: 700;
+}
+
+.inj-label-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+  font-size: 5.5pt;
+  line-height: 1.2;
+  white-space: nowrap;
+}
