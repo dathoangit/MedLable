@@ -1,50 +1,26 @@
+import type {
+  LookupResult,
+  MedicationLine,
+  PatientInfo,
+  TreatmentOrder
+} from '../contracts/lookup.v1';
 import { getPool } from './pool';
+
+export type {
+  LookupResult,
+  MedicationLine,
+  PatientInfo,
+  TreatmentOrder
+} from '../contracts/lookup.v1';
 
 export const MA_HO_SO_PATTERN = /^\d{10}$/;
 
-export type PatientInfo = {
-  hisPatienthistoryId: string;
-  maHoSo: string;
-  maNb: string | null;
-  maBenhAn: string | null;
-  tenNb: string;
-  tuoi: number | null;
-  ngaySinh: string | null;
-  gioiTinh: string | null;
-};
-
-export type MedicationLine = {
-  hisServiceProductId: string;
-  tenThuoc: string | null;
-  lieuDung: string | null;
-  cachDung: string | null;
-  duongDung: string | null;
-  thoiGianKe: string | null;
-  thoiGianThucHien: string | null;
-  soLuong: number | null;
-  dvt: string | null;
-  tocDoTruyen: number | null;
-  donViTocDo: string | null;
-};
-
-export type TreatmentOrder = {
-  /** createdfromrecord_id (= nb_to_dieu_tri_id); null = ungrouped lines. */
+export type MedicationRow = MedicationLine & {
   toDieuTriId: string | null;
-  /** Earliest docdate in the group. */
-  thoiGianKe: string | null;
-  medicationCount: number;
-  medications: MedicationLine[];
-};
-
-export type LookupResult = {
-  patient: PatientInfo;
-  orders: TreatmentOrder[];
-  /** Number of his_patienthistory rows matched before picking one. */
-  matchCount: number;
-};
-
-type MedicationRow = MedicationLine & {
-  toDieuTriId: string | null;
+  /** his_service_union_id — join key for accompanying drugs. Internal only. */
+  unionId: string | null;
+  /** ref_service_union_id — points at the main line's unionId. Internal only. */
+  refUnionId: string | null;
 };
 
 export type ParseMaHoSoResult =
@@ -179,6 +155,8 @@ async function fetchMedicationRows(
   const medsResult = await db.query<{
     his_service_product_id: string;
     createdfromrecord_id: string | null;
+    his_service_union_id: string | null;
+    ref_service_union_id: string | null;
     ten_thuoc: string | null;
     his_usage: string | null;
     cach_dung: string | null;
@@ -194,6 +172,8 @@ async function fetchMedicationRows(
     SELECT
       sp.his_service_product_id,
       sp.createdfromrecord_id,
+      sp.his_service_union_id,
+      sp.ref_service_union_id,
       COALESCE(hp.name, sp.servicename) AS ten_thuoc,
       sp.his_usage,
       dos.name AS cach_dung,
@@ -236,8 +216,53 @@ async function fetchMedicationRows(
     soLuong: toNumberOrNull(row.quantity),
     dvt: row.dvt,
     tocDoTruyen: toNumberOrNull(row.transferrate),
-    donViTocDo: row.transferunit
+    donViTocDo: row.transferunit,
+    laThuocDungKem: false,
+    thuocDungKem: [],
+    unionId:
+      row.his_service_union_id == null
+        ? null
+        : String(row.his_service_union_id),
+    refUnionId:
+      row.ref_service_union_id == null ? null : String(row.ref_service_union_id)
   }));
+}
+
+/**
+ * Attaches solvent/co-drug lines to the line they are mixed into.
+ *
+ * HIS stores the link as ref_service_union_id → his_service_union_id of the
+ * main line (one level, never nested). Resolved in memory: ref_service_union_id
+ * has no index, so a SQL self-join scans the whole table.
+ *
+ * An orphan reference stays a standalone line so a drug is never hidden.
+ */
+export function attachAccompanyingDrugs(
+  rows: MedicationRow[]
+): MedicationRow[] {
+  const byUnionId = new Map<string, MedicationRow>();
+  for (const row of rows) {
+    if (row.unionId != null) {
+      byUnionId.set(row.unionId, row);
+    }
+  }
+
+  for (const row of rows) {
+    if (row.refUnionId == null) {
+      continue;
+    }
+    const main = byUnionId.get(row.refUnionId);
+    if (!main || main === row) {
+      continue;
+    }
+    main.thuocDungKem.push({
+      hisServiceProductId: row.hisServiceProductId,
+      tenThuoc: row.tenThuoc
+    });
+    row.laThuocDungKem = true;
+  }
+
+  return rows;
 }
 
 function earliestIso(a: string | null, b: string | null): string | null {
@@ -250,7 +275,7 @@ function earliestIso(a: string | null, b: string | null): string | null {
   return a <= b ? a : b;
 }
 
-function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
+export function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
   const byKey = new Map<string, TreatmentOrder>();
   const orderKeys: string[] = [];
 
@@ -279,7 +304,9 @@ function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
       soLuong: row.soLuong,
       dvt: row.dvt,
       tocDoTruyen: row.tocDoTruyen,
-      donViTocDo: row.donViTocDo
+      donViTocDo: row.donViTocDo,
+      laThuocDungKem: row.laThuocDungKem,
+      thuocDungKem: row.thuocDungKem
     };
     order.medications.push(line);
     order.medicationCount = order.medications.length;
@@ -306,8 +333,8 @@ async function lookupFromPatientRow(
   patientRow: PatientRow,
   matchCount: number
 ): Promise<LookupResult> {
-  const rows = await fetchMedicationRows(
-    String(patientRow.his_patienthistory_id)
+  const rows = attachAccompanyingDrugs(
+    await fetchMedicationRows(String(patientRow.his_patienthistory_id))
   );
   return {
     patient: mapPatient(patientRow),

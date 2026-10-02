@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -14,15 +14,9 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["chrome", "node"],
+    "types": ["node"],
     "noEmit": true
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "scripts/**/*.ts",
-    "vite.config.ts",
-    "manifest.config.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

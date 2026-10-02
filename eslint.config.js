@@ -31,19 +31,8 @@ export default tseslint.config(
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
-        ...globals.browser,
         ...globals.node,
-        ...globals.webextensions,
-        ...globals.es2021,
-        ...globals.serviceworker
-      }
-    }
-  },
-  {
-    files: ['scripts/**/*.ts', 'src/db/**/*.ts'],
-    languageOptions: {
-      globals: {
-        ...globals.node
+        ...globals.es2021
       }
     }
   },
@@ -54,7 +43,7 @@ export default tseslint.config(
       'node_modules/**/*',
       'docs/**/*',
       'output/**/*',
-      '.chrome-profile/**/*'
+      'updates/**/*'
     ]
   }
 );

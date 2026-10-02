@@ -13,9 +13,15 @@ _metadata
 .env.local
 .env.*.local
 
+# Packed extension binaries served for auto-update
+updates/*.crx
+
 # Auth / browser profile / patient output (legacy CLI)
 .chrome-profile
 .auth.json
 output/*
 !output/.gitkeep
 *.pdf
+
+# Service logs (Windows NSSM)
+logs/
