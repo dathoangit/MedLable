@@ -6,21 +6,20 @@ Goal: when a nurse prepares medication, scan a patient barcode → print a syrin
 
 ```mermaid
 flowchart LR
-  scan[Barcode scan] --> ph[his_patienthistory]
+  scan[Mã hồ sơ or mã bệnh án] --> ph[his_patienthistory]
   ph --> sp[his_service_product]
   sp --> prod[his_product]
   sp --> mu[his_methoduse]
   sp --> dos[his_dosage]
   sp --> uom[c_uom]
-  sp --> storDoc[his_storage_document]
-  ph --> dept[his_department]
-  ph --> bed[his_bed / his_room]
 ```
+
+Department, bed, and storage documents are on the encounter and the line, but the server does not join them. The extension filters routes after the JSON comes back.
 
 **Primary fact table:** `adempiere.his_service_product`  
 Each row is a medication (or product) line on a patient encounter (`his_patienthistory_id`), with dosage, route, quantity, infusion rate, and pharmacy/storage linkage.
 
-**Ready-made nursing views** (prefer these when they match the workflow):
+**Nursing views** (reference only — the server queries the base tables, not these views):
 
 | View                              | Role                                                                                                      |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -44,7 +43,7 @@ Each row is a medication (or product) line on a patient encounter (`his_patienth
 | `his_room` / `his_bed` / `his_patient_bed` | Location                         | Bed/room for inpatient labels                                                                                                                                                                                                                 |
 
 **Lookup indexes on encounter:** unique `hph_patientdocument` (mã hồ sơ), `hph_value` (mã NB), name/trigram indexes.  
-**No index on `scancode`** was found — confirm scanner payload with IT; if scans use `scancode`, consider requesting an index.
+**No index on `scancode` or `his_medicalrecordno`.** MedLabel does not query `scancode`. Mã bệnh án lookup can seq-scan; see [HIS_DB_OVERVIEW.md](HIS_DB_OVERVIEW.md).
 
 ### Mã hồ sơ vs mã NB
 
@@ -125,8 +124,8 @@ Verified constraints (recent 3-day window):
 - The link is **one level**. An accompanying line never points at another accompanying line.
 - One main line has at most a few companions for injections (almost always 1, sometimes 2).
 - Dose, route text, and infusion rate live on the **main** line. Accompanying lines carry name, quantity, and unit only.
-- Traditional-medicine formulas reuse the same columns for a whole thang (13–18 herbs, route `Uống`). Injection labels ignore them because the route filter excludes oral lines.
-- Do not filter to `createdfromservicetype = 'MedicalRecordLine'`. That source exists only for inpatients. Outpatient medicine is `CheckUp` / `Document`, and intraoperative medicine is `Surgery`.
+- Traditional-medicine formulas reuse the same columns for a whole thang (13–18 herbs, route `Uống`). The server returns those rows. The extension does not print them, because the route is neither an injection nor an infusion.
+- Do not filter to `createdfromservicetype = 'MedicalRecordLine'`. That source exists only for inpatients. Outpatient medicine is `CheckUp` / `Document`, and intraoperative medicine is `Surgery`. The server does not filter this column.
 
 ### Pharmacy / dispense
 
@@ -149,51 +148,51 @@ Dispensed flag in nursing view: `da_phat` ⇔ storage document `isverified = 'Y'
 | `his_qrcode`                | Payment/QR flows — not patient wristband scan         |
 | `m_product` / `c_order*`    | ADempiere ERP core — HIS clinical meds use `his_*`    |
 
-## Suggested query (label payload)
+## Query the server runs
 
-Resolve encounter, then load today’s parenteral lines. Adjust the scan-key column after IT confirms the barcode content.
+Shaping (accompanying drugs, tờ điều trị groups, `matchCount`) is in TypeScript after these statements. The code in [`src/db/lookup.ts`](../src/db/lookup.ts) wins if it drifts from this section.
+
+The server does **not** restrict to `CURRENT_DATE`, does **not** filter `mu.name` to tiêm/truyền, and does **not** join `his_storage_document`. Route selection happens in the extension.
 
 ```sql
--- 1) Resolve encounter (example: by patienthistory.value)
+-- Mã hồ sơ. his_patientdocument is unique, so LIMIT 1 is the row.
 SELECT
-  ph.his_patienthistory_id,
-  ph.value AS ma_dot,
-  ph.name AS ten_nb,
-  ph.birthday,
-  ph.his_gender,
-  ph.his_medicalrecordno,
-  ph.his_department_id,
-  d.name AS khoa,
-  ph.his_room_id,
-  ph.his_bed_id
-FROM adempiere.his_patienthistory ph
-LEFT JOIN adempiere.his_department d
-  ON d.his_department_id = ph.his_department_id
-WHERE ph.isdeleted = 'N'
-  AND ph.isactive = 'Y'
-  AND ph.value = $1;   -- or scancode / his_patientdocument
+  his_patienthistory_id, name, birthday, age, birthdaystr, his_gender,
+  his_patientdocument, value, his_medicalrecordno
+FROM adempiere.his_patienthistory
+WHERE his_patientdocument = $1
+  AND isdeleted = 'N'
+  AND isactive = 'Y'
+LIMIT 1;
 
--- 2) Medication lines for labels (injection / infusion routes)
+-- Mã bệnh án. Latest encounter; match_count is how many shared the code.
+SELECT
+  his_patienthistory_id, name, birthday, age, birthdaystr, his_gender,
+  his_patientdocument, value, his_medicalrecordno,
+  COUNT(*) OVER() AS match_count
+FROM adempiere.his_patienthistory
+WHERE his_medicalrecordno = $1
+  AND isdeleted = 'N'
+  AND isactive = 'Y'
+ORDER BY timegoin DESC NULLS LAST, his_patienthistory_id DESC
+LIMIT 1;
+
+-- Every active line on that encounter.
 SELECT
   sp.his_service_product_id,
+  sp.createdfromrecord_id,
+  sp.his_service_union_id,
+  sp.ref_service_union_id,
   COALESCE(hp.name, sp.servicename) AS ten_thuoc,
-  hp.originalname,
-  hp.his_activeingredient AS hoat_chat,
-  hp.dosage_form,
-  hp.infusionvolume,
-  mu.name AS duong_dung,
+  sp.his_usage,
   dos.name AS cach_dung,
-  sp.his_usage AS lieu_dung,
-  sp.quantity,
-  sp.requestedquantity,
-  uom.name AS dvt,
-  sp.transferrate AS toc_do_truyen,
-  sp.transferunit AS don_vi_toc_do,
-  sp.usedhour,
+  mu.name AS duong_dung,
   sp.docdate,
   sp.actdate,
-  sp.isdrugstore,
-  COALESCE(hsd.isverified, 'N') AS da_xuat_kho
+  sp.quantity,
+  uom.name AS dvt,
+  sp.transferrate,
+  sp.transferunit
 FROM adempiere.his_service_product sp
 LEFT JOIN adempiere.his_product hp
   ON hp.his_service_id = sp.his_service_id
@@ -203,53 +202,38 @@ LEFT JOIN adempiere.his_dosage dos
   ON dos.his_dosage_id = sp.his_dosage_id
 LEFT JOIN adempiere.c_uom uom
   ON uom.c_uom_id = COALESCE(sp.c_uom_id, hp.c_uom_id)
-LEFT JOIN adempiere.his_storage_document hsd
-  ON hsd.his_storage_document_id = COALESCE(sp.batchdist_storage_doc_id, sp.his_storage_document_id)
-WHERE sp.isdeleted = 'N'
+WHERE sp.his_patienthistory_id = $1
+  AND sp.isdeleted = 'N'
   AND sp.isactive = 'Y'
-  AND sp.his_patienthistory_id = $1
-  AND sp.docdate::date = CURRENT_DATE   -- or actdate; confirm with nursing
-  AND mu.name ~* '(tiêm|truyền)';       -- or filter by his_methoduse_id list
-ORDER BY mu.priority NULLS LAST, sp.actdate, sp.seqno;
+ORDER BY sp.docdate NULLS LAST, sp.actdate NULLS LAST, sp.seqno NULLS LAST;
 ```
 
-Equivalent nursing-oriented view:
+`nb_phieu_thuc_hien_y_lenh_thuoc` is the nursing-screen equivalent (`nb_dot_dieu_tri_id` = `his_patienthistory_id`). Useful when comparing a phiếu on screen to the API. Do not `SELECT *` from it without that filter.
 
-```sql
-SELECT *
-FROM adempiere.nb_phieu_thuc_hien_y_lenh_thuoc
-WHERE nb_dot_dieu_tri_id = $1   -- = his_patienthistory_id
-  AND ten_duong_dung ~* '(tiêm|truyền)'
-  AND deleted = false;
-```
+## Fields the API returns vs fields the label prints
 
-## Label field checklist
+| API field                         | HIS source                                           | On the current label                                               |
+| --------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ |
+| `tenNb`                           | `his_patienthistory.name`                            | Injection and infusion                                             |
+| `tuoi`                            | `age`, else computed from `birthday` / `birthdaystr` | Injection only                                                     |
+| `ngaySinh`                        | `birthday`                                           | Infusion, as a four-digit birth year                               |
+| `maBenhAn`                        | `his_medicalrecordno`                                | Both                                                               |
+| `maHoSo` / `maNb`                 | `his_patientdocument` / `value`                      | Not printed                                                        |
+| `gioiTinh`                        | `his_gender`                                         | Not printed                                                        |
+| `tenThuoc`                        | `his_product.name`, else `servicename`               | Both                                                               |
+| `thuocDungKem[].tenThuoc`         | accompanying line name                               | Both, joined with `+`                                              |
+| `duongDung`                       | `his_methoduse.name`                                 | Not printed; the extension uses it to choose injection vs infusion |
+| `lieuDung`                        | `his_usage`                                          | Infusion only, labeled "Tốc độ"                                    |
+| `cachDung`                        | `his_dosage.name`                                    | Not printed                                                        |
+| `soLuong` / `dvt`                 | `quantity` / `c_uom.name`                            | Not printed                                                        |
+| `tocDoTruyen` / `donViTocDo`      | `transferrate` / `transferunit`                      | Not printed                                                        |
+| `thoiGianKe` / `thoiGianThucHien` | `docdate` / `actdate`                                | Not printed; infusion "Thời gian" is the clock at print time       |
 
-| Label area               | Source                                             |
-| ------------------------ | -------------------------------------------------- |
-| Patient name             | `his_patienthistory.name`                          |
-| Patient / encounter code | `value` / `his_patientdocument` / `scancode` (TBD) |
-| DOB / gender             | `birthday`, `his_gender`                           |
-| Ward / bed               | `his_department`, `his_room`, `his_bed`            |
-| Drug name                | `his_product.name` / `servicename`                 |
-| Ingredient               | `his_product.his_activeingredient`                 |
-| Strength / form          | `dosage_form`, `his_measure`, `infusionvolume`     |
-| Route                    | `his_methoduse.name`                               |
-| Instructions             | `his_dosage.name` + `his_usage`                    |
-| Qty / UOM                | `quantity` + `c_uom.name`                          |
-| Infusion rate            | `transferrate` + `transferunit` (`ml/h`, `d/m`)    |
-| Time                     | `usedhour` / `actdate`                             |
+Ward, bed, active ingredient, and dispense status are not selected.
 
 ## Performance guidelines
 
-1. Always bind `his_patienthistory_id` (indexed).
-2. Restrict by `docdate` or `actdate` (day window).
-3. Avoid `SELECT *` from heavy views without encounter filter.
-4. Cache `his_methoduse` / `his_dosage` in the app (tiny tables).
-
-## Next discovery steps
-
-1. Confirm barcode field with a controlled test scan (IT + nursing).
-2. Compare one known inpatient’s y lệnh on screen vs `nb_phieu_thuc_hien_y_lenh_thuoc` for the same `his_patienthistory_id`.
-3. Decide dispense filter (`da_phat` / `isverified`).
-4. Design label template + print path (Zebra/Godex/Windows printer).
+1. Always bind `his_patienthistory_id` (indexed) before touching `his_service_product`.
+2. Do not self-join `ref_service_union_id` in SQL; that column has no index. Resolve accompanying drugs in memory, as the server does.
+3. Avoid `SELECT *` from heavy views without an encounter filter.
+4. Mã bệnh án is the slow path until `his_medicalrecordno` is indexed.

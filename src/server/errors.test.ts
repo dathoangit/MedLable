@@ -25,6 +25,18 @@ test('hides Postgres schema details from API clients', () => {
   assert.equal(body.error.includes('column'), false);
 });
 
+test('hides statement_timeout / query_canceled (57014) from API clients', () => {
+  const error = Object.assign(
+    new Error('canceling statement due to statement timeout'),
+    { code: '57014' }
+  );
+  assert.equal(isDatabaseError(error), true);
+  const body = toPublicError(error);
+  assert.equal(body.code, 'INTERNAL');
+  assert.equal(body.error.includes('timeout'), false);
+  assert.equal(body.error.includes('canceling'), false);
+});
+
 test('keeps a deliberate validation message', () => {
   const body = toPublicError(new Error('Invalid mã hồ sơ.'), 'VALIDATION');
   assert.equal(body.code, 'VALIDATION');

@@ -5,6 +5,9 @@ export function sendJson(
   status: number,
   body: unknown
 ): void {
+  if (res.headersSent) {
+    return;
+  }
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',

@@ -5,6 +5,9 @@ export type ServerConfig = {
   bindHost: string;
   updateDir: string;
   rateLimitPerMinute: number;
+  statementTimeoutMs: number;
+  requestTimeoutMs: number;
+  shutdownDrainMs: number;
 };
 
 function readPort(raw: string | undefined, fallback: number): number {
@@ -42,6 +45,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
       env.RATE_LIMIT_PER_MINUTE,
       60,
       'RATE_LIMIT_PER_MINUTE'
+    ),
+    statementTimeoutMs: readPositiveInt(
+      env.STATEMENT_TIMEOUT_MS,
+      8000,
+      'STATEMENT_TIMEOUT_MS'
+    ),
+    requestTimeoutMs: readPositiveInt(
+      env.REQUEST_TIMEOUT_MS,
+      10_000,
+      'REQUEST_TIMEOUT_MS'
+    ),
+    shutdownDrainMs: readPositiveInt(
+      env.SHUTDOWN_DRAIN_MS,
+      10_000,
+      'SHUTDOWN_DRAIN_MS'
     )
   };
 }

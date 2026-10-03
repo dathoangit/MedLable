@@ -1,10 +1,11 @@
-import { closePool } from '../src/db/pool';
+import { closePool, initPool } from '../src/db/pool';
 import {
   lookupByMaBenhAn,
   lookupByMaHoSo,
   parseMaBenhAn,
   parseMaHoSo
 } from '../src/db/lookup';
+import { loadConfig } from '../src/server/config';
 
 function readFlag(argv: string[], name: string): string | null {
   const eq = `--${name}=`;
@@ -21,6 +22,9 @@ function readFlag(argv: string[], name: string): string | null {
 }
 
 async function main(): Promise<void> {
+  const config = loadConfig();
+  initPool({ statementTimeoutMs: config.statementTimeoutMs });
+
   const argv = process.argv.slice(2);
   const maHoSoRaw = readFlag(argv, 'ma-ho-so');
   const maBenhAnRaw = readFlag(argv, 'ma-benh-an');

@@ -1,7 +1,8 @@
 # HIS key objects — column inventory
 
 Schema: `adempiere`. Captured 2026-09-23.  
-Row counts are approximate snapshots.
+Row counts are approximate snapshots.  
+The columns the API actually reads are in [HIS_DB_MEDLABEL.md](HIS_DB_MEDLABEL.md). This file is the wider inventory.
 
 ## Tables
 
@@ -83,21 +84,21 @@ Template advice texts (`contenttext`, `isformedicine`) — not per-order.
 
 ## Views (medication / y lệnh)
 
-| View | Purpose |
-|------|---------|
-| `nb_phieu_thuc_hien_y_lenh_thuoc` | Medication execution slip (VN columns) |
-| `nb_phieu_thuc_hien_y_lenh` | Generic execution slip |
-| `nb_phieu_thuc_hien_y_lenh_vat_tu` | Supplies |
-| `nb_phieu_thuc_hien_y_lenh_xn_cdha` | Lab/imaging |
-| `nb_to_dieu_tri` | Treatment sheet header |
-| `nb_ngay_y_lenh` | Order dates |
-| `his_rv_y_lenh_product` | Y lệnh product lines |
-| `his_rv_medical_product` | Medical product lines |
-| `his_rv_medical_ylenh` | Medical y lệnh summary |
-| `his_rv_medical_ylenh_surgery` | Surgery variant |
-| `his_rv_donthuoc*` | Prescription report views |
-| `his_hsba_medicine` | HSBA medicine projection of `his_service_product` |
-| `to_dieu_tri` / `his_rv_to_dieu_tri_*` | Treatment-sheet report variants |
+| View                                   | Purpose                                           |
+| -------------------------------------- | ------------------------------------------------- |
+| `nb_phieu_thuc_hien_y_lenh_thuoc`      | Medication execution slip (VN columns)            |
+| `nb_phieu_thuc_hien_y_lenh`            | Generic execution slip                            |
+| `nb_phieu_thuc_hien_y_lenh_vat_tu`     | Supplies                                          |
+| `nb_phieu_thuc_hien_y_lenh_xn_cdha`    | Lab/imaging                                       |
+| `nb_to_dieu_tri`                       | Treatment sheet header                            |
+| `nb_ngay_y_lenh`                       | Order dates                                       |
+| `his_rv_y_lenh_product`                | Y lệnh product lines                              |
+| `his_rv_medical_product`               | Medical product lines                             |
+| `his_rv_medical_ylenh`                 | Medical y lệnh summary                            |
+| `his_rv_medical_ylenh_surgery`         | Surgery variant                                   |
+| `his_rv_donthuoc*`                     | Prescription report views                         |
+| `his_hsba_medicine`                    | HSBA medicine projection of `his_service_product` |
+| `to_dieu_tri` / `his_rv_to_dieu_tri_*` | Treatment-sheet report variants                   |
 
 ### `his_rv_y_lenh_product` columns
 
