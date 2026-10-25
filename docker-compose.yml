@@ -1,0 +1,32 @@
+services:
+  medlabel:
+    build: .
+    image: medlabel:latest
+    container_name: medlabel-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Wins over PORT in .env. The app listens on 8082 inside the container.
+      NODE_ENV: production
+      PORT: "8082"
+      BIND_HOST: 0.0.0.0
+      UPDATE_DIR: updates
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "8082:8082"
+    volumes:
+      # Host folder is what Chrome fetches (/updates.xml and *.crx).
+      - ./updates:/app/updates:ro
+      - /etc/localtime:/etc/localtime:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8082/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3

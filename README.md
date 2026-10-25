@@ -6,6 +6,7 @@ The server also hosts the extension's auto-update files (`updates.xml` + `.crx`)
 
 The Chrome extension lives in a separate repo: `medlabel-extension` (checked out next to this one as `../MedLabelExtension`).
 
+- Phân tích luồng BE ↔ FE (tiếng Việt): [docs/PHAN_TICH_LUONG.md](docs/PHAN_TICH_LUONG.md)
 - Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Hospital deployment and workstation rollout: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (Windows + NSSM; not Docker)
 

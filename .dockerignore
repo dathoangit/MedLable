@@ -1,0 +1,21 @@
+.git
+dist
+node_modules
+logs
+
+# Secrets stay on the host and are injected with env_file.
+.env
+.env.*
+
+.husky
+.github
+.codegraph
+.cursor
+.vscode
+
+docs
+*.md
+.DS_Store
+*.log
+coverage
+*.tsbuildinfo
