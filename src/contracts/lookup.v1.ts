@@ -35,8 +35,9 @@ export type MedicationLine = {
   thoiGianKe: string | null;
   thoiGianThucHien: string | null;
   /**
-   * Treatment-sheet order time (`nb_to_dieu_tri.ngay_y_lenh`).
-   * Used as Giờ pha on infusion labels. Null when the line has no tờ.
+   * Ngày Y lệnh from HIS (`his_medicalrecordline.docdate`, else
+   * `nb_to_dieu_tri.ngay_y_lenh`). Used on the phiếu header and as the
+   * date on infusion "Giờ pha". Null only when the line is not from a phiếu.
    */
   thoiGianYLenh: string | null;
   soLuong: number | null;
@@ -54,7 +55,7 @@ export type TreatmentOrder = {
   toDieuTriId: string | null;
   /** Earliest docdate in the group. */
   thoiGianKe: string | null;
-  /** `nb_to_dieu_tri.ngay_y_lenh` for this tờ; null when ungrouped. */
+  /** Ngày Y lệnh for this phiếu; null when ungrouped / non-phiếu lines. */
   thoiGianYLenh: string | null;
   medicationCount: number;
   medications: MedicationLine[];

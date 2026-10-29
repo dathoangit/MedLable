@@ -181,12 +181,16 @@ async function fetchMedicationRows(
       mu.name AS duong_dung,
       sp.docdate,
       sp.actdate,
-      tdt.ngay_y_lenh,
+      -- Inpatient phiếu: createdfromservicetype=MedicalRecordLine → MRL.docdate
+      -- (= "Ngày Y lệnh" on the HIS form). Same id often mirrors nb_to_dieu_tri.
+      COALESCE(mrl.docdate, tdt.ngay_y_lenh) AS ngay_y_lenh,
       sp.quantity,
       uom.name AS dvt,
       sp.transferrate,
       sp.transferunit
     FROM adempiere.his_service_product sp
+    LEFT JOIN adempiere.his_medicalrecordline mrl
+      ON mrl.his_medicalrecordline_id = sp.createdfromrecord_id
     LEFT JOIN adempiere.nb_to_dieu_tri tdt
       ON tdt.id = sp.createdfromrecord_id
     LEFT JOIN adempiere.his_product hp
