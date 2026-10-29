@@ -28,7 +28,7 @@ Injection / infusion related (value prefix `2.*` plus “Truyền”):
 
 Other common routes (full table has 64 rows): Uống, Ngậm, Bôi, Xịt, Khí dung, Nhỏ mắt/mũi/tai, Đặt, Thụt, …
 
-The server does not filter by these ids. The extension classifies `his_methoduse.name`: an injection starts with "Tiêm" and does not contain "truyền"; an infusion contains "truyền". "Tiêm truyền tĩnh mạch" and "Tiêm truyền" are infusions. "Thủy châm" is in the list above and is not printed. "Uống" and every other route are returned and not printed.
+The server does not filter by these ids. The extension classifies each line from `his_methoduse.name` (`duongDung`) and, when needed, `his_usage` (`lieuDung`): a route containing "truyền" is an infusion; a plain "Tiêm" route whose dose text matches TTM / truyền / pha truyền is also an infusion; other plain "Tiêm" routes are injections. "Tiêm truyền tĩnh mạch" and "Tiêm truyền" are infusions. "Thủy châm" is in the list above and is not printed. "Uống" and every other route are returned and not printed.
 
 ## Product types — `his_producttype`
 

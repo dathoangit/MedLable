@@ -163,6 +163,7 @@ async function fetchMedicationRows(
     duong_dung: string | null;
     docdate: Date | null;
     actdate: Date | null;
+    ngay_y_lenh: Date | null;
     quantity: string | null;
     dvt: string | null;
     transferrate: string | null;
@@ -180,11 +181,14 @@ async function fetchMedicationRows(
       mu.name AS duong_dung,
       sp.docdate,
       sp.actdate,
+      tdt.ngay_y_lenh,
       sp.quantity,
       uom.name AS dvt,
       sp.transferrate,
       sp.transferunit
     FROM adempiere.his_service_product sp
+    LEFT JOIN adempiere.nb_to_dieu_tri tdt
+      ON tdt.id = sp.createdfromrecord_id
     LEFT JOIN adempiere.his_product hp
       ON hp.his_service_id = sp.his_service_id
     LEFT JOIN adempiere.his_methoduse mu
@@ -213,6 +217,7 @@ async function fetchMedicationRows(
     duongDung: row.duong_dung,
     thoiGianKe: toIsoOrNull(row.docdate),
     thoiGianThucHien: toIsoOrNull(row.actdate),
+    thoiGianYLenh: toIsoOrNull(row.ngay_y_lenh),
     soLuong: toNumberOrNull(row.quantity),
     dvt: row.dvt,
     tocDoTruyen: toNumberOrNull(row.transferrate),
@@ -286,6 +291,7 @@ export function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
       order = {
         toDieuTriId: row.toDieuTriId,
         thoiGianKe: row.thoiGianKe,
+        thoiGianYLenh: row.thoiGianYLenh,
         medicationCount: 0,
         medications: []
       };
@@ -301,6 +307,7 @@ export function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
       duongDung: row.duongDung,
       thoiGianKe: row.thoiGianKe,
       thoiGianThucHien: row.thoiGianThucHien,
+      thoiGianYLenh: row.thoiGianYLenh,
       soLuong: row.soLuong,
       dvt: row.dvt,
       tocDoTruyen: row.tocDoTruyen,
@@ -311,6 +318,9 @@ export function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
     order.medications.push(line);
     order.medicationCount = order.medications.length;
     order.thoiGianKe = earliestIso(order.thoiGianKe, row.thoiGianKe);
+    if (order.thoiGianYLenh == null && row.thoiGianYLenh != null) {
+      order.thoiGianYLenh = row.thoiGianYLenh;
+    }
   }
 
   const orders = orderKeys.map((key) => byKey.get(key)!);

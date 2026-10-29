@@ -19,6 +19,7 @@ function row(
     duongDung: 'Tiêm tĩnh mạch',
     thoiGianKe: '2026-09-29T00:00:00.000Z',
     thoiGianThucHien: null,
+    thoiGianYLenh: '2026-09-29T00:00:00.000Z',
     soLuong: 1,
     dvt: 'Lọ',
     tocDoTruyen: null,
@@ -107,4 +108,20 @@ test('copies accompanying flags onto the grouped medication line', () => {
   ]);
   assert.equal(solventLine?.laThuocDungKem, true);
   assert.deepEqual(solventLine?.thuocDungKem, []);
+});
+
+test('keeps tờ y-lệnh time on the order and each medication line', () => {
+  const yLenh = '2026-10-28T14:12:07.000Z';
+  const earlierKe = '2026-10-28T14:14:00.000Z';
+  const laterKe = '2026-10-28T14:26:00.000Z';
+  const orders = groupIntoOrders([
+    row('a', { thoiGianKe: laterKe, thoiGianYLenh: yLenh }),
+    row('b', { thoiGianKe: earlierKe, thoiGianYLenh: yLenh })
+  ]);
+
+  assert.equal(orders.length, 1);
+  assert.equal(orders[0]?.thoiGianKe, earlierKe);
+  assert.equal(orders[0]?.thoiGianYLenh, yLenh);
+  assert.equal(orders[0]?.medications[0]?.thoiGianYLenh, yLenh);
+  assert.equal(orders[0]?.medications[1]?.thoiGianYLenh, yLenh);
 });

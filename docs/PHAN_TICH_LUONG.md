@@ -139,13 +139,15 @@ BE **không** gắn cờ “là tiêm” / “là truyền”. Chỉ trả `duon
 
 `lib/routes.ts`:
 
-| Hàm                                       | Rule                                             |
-| ----------------------------------------- | ------------------------------------------------ |
-| `isInjectableRoute`                       | trim, `/^tiêm/i`, và **không** match `/truyền/i` |
-| `isInfusionRoute`                         | chứa `/truyền/i`                                 |
-| `injectablesInOrder` / `infusionsInOrder` | thêm `!laThuocDungKem`                           |
+| Hàm                                               | Rule                                                                                                                                                |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `isInfusionRoute`                                 | primitive: `duongDung` chứa `/truyền/i`                                                                                                             |
+| `isInjectableRoute`                               | primitive: trim, `/^tiêm/i`, và **không** match `/truyền/i`                                                                                         |
+| `classifyLabelKind`                               | (1) route truyền → infusion; (2) tiêm thuần + `lieuDung` ~ `/(TTM\|truyền\|pha\s*truyền)/i` → infusion; (3) tiêm thuần → injection; (4) else → null |
+| `isInfusionMedication` / `isInjectableMedication` | derive từ `classifyLabelKind` (không chồng)                                                                                                         |
+| `injectablesInOrder` / `infusionsInOrder`         | `!laThuocDungKem` + medication helpers trên                                                                                                         |
 
-Hai filter **không chồng**. Uống / YHCT thang vẫn nằm trong bảng UI nhưng không vào job in.
+Hai filter **không chồng**. Uống / YHCT thang vẫn nằm trong bảng UI nhưng không vào job in. P0 không dùng `thuocDungKem` làm tín hiệu truyền.
 
 ### 4.3. Build HTML tem
 

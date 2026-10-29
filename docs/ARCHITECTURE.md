@@ -31,7 +31,7 @@ graph LR
 - **Only the server talks to Postgres.** Credentials live in the server `.env`. Anything shipped in the extension is readable by anyone who unzips the `.crx`.
 - **Only the client prints.** Label printers are attached locally through the Windows driver; the server returns data, never documents.
 - **The label layout lives in the extension** (`src/lib/labels.ts`). Changing it needs an extension release. If the template starts changing often, move it behind a server endpoint so edits take effect without a release.
-- **Route filtering lives in the extension** (`src/lib/routes.ts`). The server returns every active medication line. An injection is a route that starts with "Tiêm" and does not contain "truyền". An infusion is a route that contains "truyền". Oral lines, including a traditional-medicine thang, come back in the JSON and are not printed.
+- **Route filtering lives in the extension** (`src/lib/routes.ts`). The server returns every active medication line. Classification uses `duongDung` and, when needed, `lieuDung`: a route containing "truyền" is an infusion; a plain "Tiêm" route whose dose text matches TTM / truyền / pha truyền is also an infusion (HIS often defaults the catalog route to "Tiêm"); other plain "Tiêm" routes are injections. Oral lines, including a traditional-medicine thang, come back in the JSON and are not printed.
 
 ## Lookup
 
