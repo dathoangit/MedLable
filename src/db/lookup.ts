@@ -168,6 +168,7 @@ async function fetchMedicationRows(
     dvt: string | null;
     transferrate: string | null;
     transferunit: string | null;
+    isdeleted: string | null;
   }>(
     `
     SELECT
@@ -187,7 +188,8 @@ async function fetchMedicationRows(
       sp.quantity,
       uom.name AS dvt,
       sp.transferrate,
-      sp.transferunit
+      sp.transferunit,
+      sp.isdeleted
     FROM adempiere.his_service_product sp
     LEFT JOIN adempiere.his_medicalrecordline mrl
       ON mrl.his_medicalrecordline_id = sp.createdfromrecord_id
@@ -202,9 +204,9 @@ async function fetchMedicationRows(
     LEFT JOIN adempiere.c_uom uom
       ON uom.c_uom_id = COALESCE(sp.c_uom_id, hp.c_uom_id)
     WHERE sp.his_patienthistory_id = $1
-      AND sp.isdeleted = 'N'
       AND sp.isactive = 'Y'
-    ORDER BY sp.docdate NULLS LAST, sp.actdate NULLS LAST, sp.seqno NULLS LAST
+    ORDER BY sp.isdeleted ASC, sp.docdate NULLS LAST, sp.actdate NULLS LAST,
+      sp.seqno NULLS LAST
     `,
     [patientHistoryId]
   );
@@ -228,6 +230,7 @@ async function fetchMedicationRows(
     donViTocDo: row.transferunit,
     laThuocDungKem: false,
     thuocDungKem: [],
+    daXoa: row.isdeleted === 'Y',
     unionId:
       row.his_service_union_id == null
         ? null
@@ -317,7 +320,8 @@ export function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
       tocDoTruyen: row.tocDoTruyen,
       donViTocDo: row.donViTocDo,
       laThuocDungKem: row.laThuocDungKem,
-      thuocDungKem: row.thuocDungKem
+      thuocDungKem: row.thuocDungKem,
+      daXoa: row.daXoa
     };
     order.medications.push(line);
     order.medicationCount = order.medications.length;
@@ -329,16 +333,16 @@ export function groupIntoOrders(rows: MedicationRow[]): TreatmentOrder[] {
 
   const orders = orderKeys.map((key) => byKey.get(key)!);
   orders.sort((a, b) => {
-    if (a.thoiGianKe == null && b.thoiGianKe == null) {
+    if (a.thoiGianYLenh == null && b.thoiGianYLenh == null) {
       return 0;
     }
-    if (a.thoiGianKe == null) {
+    if (a.thoiGianYLenh == null) {
       return 1;
     }
-    if (b.thoiGianKe == null) {
+    if (b.thoiGianYLenh == null) {
       return -1;
     }
-    return b.thoiGianKe.localeCompare(a.thoiGianKe);
+    return b.thoiGianYLenh.localeCompare(a.thoiGianYLenh);
   });
   return orders;
 }

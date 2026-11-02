@@ -26,6 +26,7 @@ function row(
     donViTocDo: null,
     laThuocDungKem: false,
     thuocDungKem: [],
+    daXoa: false,
     unionId: id,
     refUnionId: null,
     ...overrides
@@ -124,4 +125,27 @@ test('keeps tờ y-lệnh time on the order and each medication line', () => {
   assert.equal(orders[0]?.thoiGianYLenh, yLenh);
   assert.equal(orders[0]?.medications[0]?.thoiGianYLenh, yLenh);
   assert.equal(orders[0]?.medications[1]?.thoiGianYLenh, yLenh);
+});
+
+test('sorts phiếu by thoiGianYLenh newest first', () => {
+  const older = '2026-10-27T08:00:00.000Z';
+  const newer = '2026-10-28T14:12:07.000Z';
+  const orders = groupIntoOrders([
+    row('old-a', {
+      toDieuTriId: '1',
+      thoiGianKe: '2026-10-28T10:00:00.000Z',
+      thoiGianYLenh: older
+    }),
+    row('new-a', {
+      toDieuTriId: '2',
+      thoiGianKe: '2026-10-27T09:00:00.000Z',
+      thoiGianYLenh: newer
+    })
+  ]);
+
+  assert.equal(orders.length, 2);
+  assert.equal(orders[0]?.toDieuTriId, '2');
+  assert.equal(orders[0]?.thoiGianYLenh, newer);
+  assert.equal(orders[1]?.toDieuTriId, '1');
+  assert.equal(orders[1]?.thoiGianYLenh, older);
 });

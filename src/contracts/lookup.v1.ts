@@ -48,6 +48,11 @@ export type MedicationLine = {
   laThuocDungKem: boolean;
   /** Solvents / co-drugs mixed into this line. Empty for most lines. */
   thuocDungKem: AccompanyingDrug[];
+  /**
+   * True when HIS soft-deleted the line (`his_service_product.isdeleted = Y`).
+   * Included so phiếu that only have deleted lines still appear in lookup.
+   */
+  daXoa: boolean;
 };
 
 export type TreatmentOrder = {
